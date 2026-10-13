@@ -1,0 +1,1 @@
+Dependency test build: replaced pyrogrammod with pyrofork for PyTgCalls compatibility. Requires clean dependency rebuild. Syntax checks only; live dependency import and Telegram VC tests not verified.
