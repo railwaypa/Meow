@@ -1,38 +1,45 @@
-
 import logging
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-from config import HNDLR, SUDO_USERS
-
-LOGGER = logging.getLogger("Meow.CommandDebug")
+LOGGER = logging.getLogger("Meow.Debug")
 
 
 @Client.on_message(filters.all, group=-100)
-async def debug_all_messages(client: Client, message: Message):
+async def meow_debug(client: Client, message: Message):
+
     text = message.text or message.caption or ""
 
     if not text:
         return
 
     LOGGER.warning(
-        "MESSAGE DEBUG | chat_id=%s | from_user=%s | outgoing=%s | text=%r | prefix=%r",
+        "MEOW DEBUG | chat=%s | user=%s | outgoing=%s | text=%r",
         message.chat.id,
         message.from_user.id if message.from_user else None,
         message.outgoing,
         text[:100],
-        HNDLR,
     )
 
+    if text.strip().lower() != ".testmeow":
+        return
 
-@Client.on_message(
-    filters.me & filters.command("testmeow", prefixes=HNDLR),
-    group=-99,
-)
-async def test_meow(client: Client, message: Message):
-    LOGGER.warning("TESTMEOW COMMAND MATCHED")
+    me = await client.get_me()
 
-    await message.edit_text(
-        "✅ Meow Userbot command handler is working!"
-    )
+    if not message.from_user or message.from_user.id != me.id:
+        LOGGER.warning("TEST IGNORED: Sender is not session owner")
+        return
+
+    LOGGER.warning("MEOW TEST COMMAND DETECTED")
+
+    try:
+        await message.edit_text(
+            "✅ MEOW DEBUG SUCCESS!\n\n"
+            "Telegram updates and message editing are working."
+        )
+
+        LOGGER.warning("MEOW TEST COMMAND EXECUTED SUCCESSFULLY")
+
+    except Exception:
+        LOGGER.exception("MEOW TEST COMMAND FAILED")
