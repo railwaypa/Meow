@@ -7,7 +7,7 @@
     "MusicPlayer",
     "VideoPlayer"
   ],
-  "repository": "https://github.com/railwaypa/Meow",
+  "repository": "https://github.com/BRANDED-THUNDER/Meow",
   "env": {
     "SESSION": {
       "description": "Pyrogram String Session",
