@@ -7,6 +7,7 @@ import pyrogram
 
 from pyrogram import filters
 from pyrogram.handlers import MessageHandler
+from pyrogram.handlers import RawUpdateHandler
 from pytgcalls import idle
 
 from config import bot, call_py, HNDLR
