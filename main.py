@@ -1,3 +1,4 @@
+import traceback
 import asyncio
 
 from pytgcalls import idle
