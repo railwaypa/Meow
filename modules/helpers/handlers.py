@@ -1,0 +1,73 @@
+from pytgcalls import filters as call_filters
+from pytgcalls.types import StreamEnded
+from modules.helpers.modern_calls import AudioPiped, AudioVideoPiped, HighQualityAudio, HighQualityVideo, MediumQualityVideo, LowQualityVideo
+
+from config import bot, call_py
+from modules.helpers.queues import QUEUE, clear_queue, get_queue, pop_an_item
+
+
+async def skip_current_song(chat_id):
+    if chat_id in QUEUE:
+        chat_queue = get_queue(chat_id)
+        if len(chat_queue) == 1:
+            await call_py.leave_group_call(chat_id)
+            clear_queue(chat_id)
+            return 1
+        else:
+            songname = chat_queue[1][0]
+            url = chat_queue[1][1]
+            link = chat_queue[1][2]
+            type = chat_queue[1][3]
+            Q = chat_queue[1][4]
+            if type == "Audio":
+                await call_py.change_stream(
+                    chat_id,
+                    AudioPiped(
+                        url,
+                    ),
+                )
+            elif type == "Video":
+                if Q == 720:
+                    hm = HighQualityVideo()
+                elif Q == 480:
+                    hm = MediumQualityVideo()
+                elif Q == 360:
+                    hm = LowQualityVideo()
+                await call_py.change_stream(
+                    chat_id, AudioVideoPiped(url, HighQualityAudio(), hm)
+                )
+            pop_an_item(chat_id)
+            return [songname, link, type]
+    else:
+        return 0
+
+
+async def skip_item(chat_id, h):
+    if chat_id in QUEUE:
+        chat_queue = get_queue(chat_id)
+        try:
+            x = int(h)
+            songname = chat_queue[x][0]
+            chat_queue.pop(x)
+            return songname
+        except Exception as e:
+            print(e)
+            return 0
+    else:
+        return 0
+
+
+@call_py.on_update(call_filters.stream_end())
+async def on_end_handler(_, update: StreamEnded):
+    if isinstance(update, StreamEnded):
+        chat_id = update.chat_id
+        print(chat_id)
+        op = await skip_current_song(chat_id)
+        if op in (0, 1):
+            return
+        else:
+            await bot.send_message(
+                chat_id,
+                f"**🗃️ Sekarang Memutar** \n[{op[0]}]({op[1]}) | `{op[2]}`",
+                disable_web_page_preview=True,
+            )
