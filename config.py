@@ -21,7 +21,7 @@ API_ID_RAW = os.getenv("API_ID", "").strip()
 API_HASH = os.getenv("API_HASH", "").strip()
 SESSION = os.getenv("SESSION", "").strip()
 
-HNDLR = os.getenv("HNDLR", ".").strip()
+HNDLR = os.getenv("HNDLR", ".").strip() or "."
 
 ALIVE_PIC = os.getenv("ALIVE_PIC", "").strip()
 ALIVE_MSG = os.getenv("ALIVE_MSG", os.getenv("AlIVE_MSG", "")).strip()
@@ -124,7 +124,9 @@ try:
     api_hash=API_HASH,
     session_string=SESSION,
     plugins=dict(root="modules"),
+    no_updates=False,
 )
+
 
 except Exception as e:
     print(f"PYROGRAM CLIENT CONFIG ERROR: {e}")
