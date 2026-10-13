@@ -6,8 +6,7 @@ import importlib.metadata
 import pyrogram
 
 from pyrogram import filters
-from pyrogram.handlers import MessageHandler
-from pyrogram.handlers import RawUpdateHandler
+from pyrogram.handlers import MessageHandler, RawUpdateHandler
 from pytgcalls import idle
 
 from config import bot, call_py, HNDLR
@@ -17,7 +16,7 @@ from config import bot, call_py, HNDLR
 # BUILD IDENTIFICATION
 # ============================================================
 
-BUILD_VERSION = "MEOW-CMD-FIX-V38"
+BUILD_VERSION = "MEOW-CMD-FIX-V39"
 
 print(
     f"\n[BUILD CHECK] {BUILD_VERSION} | NEW MAIN.PY LOADED\n",
@@ -63,6 +62,7 @@ def check_versions():
         "py-tgcalls",
         "TgCrypto",
     ):
+
         try:
             version = importlib.metadata.version(package)
 
@@ -73,6 +73,7 @@ def check_versions():
             )
 
         except importlib.metadata.PackageNotFoundError:
+
             LOGGER.warning(
                 "%s is not installed",
                 package,
@@ -87,12 +88,13 @@ def check_versions():
 
 
 # ============================================================
-# DIRECT TELEGRAM UPDATE DEBUG
+# DIRECT TELEGRAM MESSAGE DEBUG
 # ============================================================
 
 async def direct_update_debug(client, message):
 
     try:
+
         text = message.text or message.caption or ""
 
         if not text:
@@ -107,7 +109,7 @@ async def direct_update_debug(client, message):
         LOGGER.warning(
             "[DIRECT UPDATE] chat_id=%s | "
             "sender_id=%s | outgoing=%s | text=%r",
-            message.chat.id,
+            message.chat.id if message.chat else None,
             sender_id,
             message.outgoing,
             text[:100],
@@ -134,9 +136,11 @@ async def direct_update_debug(client, message):
         me = await client.get_me()
 
         if sender_id != me.id:
+
             LOGGER.warning(
                 "[DIRECT TEST] Ignored: sender is not session owner"
             )
+
             return
 
         LOGGER.warning(
@@ -155,6 +159,7 @@ async def direct_update_debug(client, message):
         )
 
     except Exception:
+
         LOGGER.error(
             "[DIRECT UPDATE] HANDLER ERROR\n%s",
             traceback.format_exc(),
@@ -166,25 +171,29 @@ async def direct_update_debug(client, message):
 # ============================================================
 
 async def raw_update_debug(client, update, users, chats):
+
     try:
+
         update_type = type(update).__name__
 
         LOGGER.warning(
             "[RAW UPDATE RECEIVED] type=%s",
-            update_type
+            update_type,
         )
 
-        # Do not log message contents or sensitive raw payloads.
+        # Do not print the complete raw update.
+        # Raw updates may contain private message data.
 
     except Exception:
+
         LOGGER.exception(
             "[RAW UPDATE] Diagnostic handler failed"
         )
 
-# ============================================================
-# REGISTER DIRECT DEBUG HANDLER
-# ============================================================
 
+# ============================================================
+# REGISTER DEBUG HANDLERS
+# ============================================================
 
 def register_debug_handler():
 
@@ -192,25 +201,27 @@ def register_debug_handler():
         "[DEBUG] Registering diagnostic handlers..."
     )
 
-    # Normal message handler
+    # Normal Telegram message diagnostic
+
     bot.add_handler(
         MessageHandler(
             direct_update_debug,
-            filters.all
+            filters.all,
         ),
-        group=-200
+        group=-200,
     )
 
     LOGGER.warning(
         "[DEBUG] Direct message handler registered"
     )
 
-    # Raw Telegram update handler
+    # Raw Telegram update diagnostic
+
     bot.add_handler(
         RawUpdateHandler(
-            raw_update_debug
+            raw_update_debug,
         ),
-        group=-300
+        group=-300,
     )
 
     LOGGER.warning(
@@ -219,9 +230,85 @@ def register_debug_handler():
 
     print(
         "[BUILD CHECK] MESSAGE + RAW HANDLERS REGISTERED",
-        flush=True
+        flush=True,
     )
 
+
+# ============================================================
+# TELEGRAM API CONNECTION DIAGNOSTIC
+# ============================================================
+
+async def collect_test_dialogs():
+
+    results = []
+
+    async for dialog in bot.get_dialogs(limit=3):
+
+        results.append(dialog.chat.id)
+
+    return results
+
+
+async def telegram_api_test():
+
+    LOGGER.warning(
+        "[API TEST] Starting Telegram API diagnostics..."
+    )
+
+    # ========================================================
+    # TEST 1: GET ACCOUNT INFORMATION
+    # ========================================================
+
+    try:
+
+        me = await asyncio.wait_for(
+            bot.get_me(),
+            timeout=20,
+        )
+
+        LOGGER.warning(
+            "[API TEST] get_me SUCCESS | user_id=%s",
+            me.id,
+        )
+
+    except Exception:
+
+        LOGGER.exception(
+            "[API TEST] get_me FAILED"
+        )
+
+    # ========================================================
+    # TEST 2: FETCH TELEGRAM DIALOGS
+    # ========================================================
+
+    try:
+
+        dialog_ids = await asyncio.wait_for(
+            collect_test_dialogs(),
+            timeout=30,
+        )
+
+        LOGGER.warning(
+            "[API TEST] get_dialogs SUCCESS | count=%s",
+            len(dialog_ids),
+        )
+
+        for chat_id in dialog_ids:
+
+            LOGGER.warning(
+                "[API TEST] Dialog received | chat_id=%s",
+                chat_id,
+            )
+
+    except Exception:
+
+        LOGGER.exception(
+            "[API TEST] get_dialogs FAILED"
+        )
+
+    LOGGER.warning(
+        "[API TEST] Telegram API diagnostics completed"
+    )
 
 
 # ============================================================
@@ -243,7 +330,7 @@ async def main():
     try:
 
         # ====================================================
-        # REGISTER DEBUG HANDLER BEFORE STARTUP
+        # REGISTER DEBUG HANDLERS BEFORE CLIENT START
         # ====================================================
 
         register_debug_handler()
@@ -257,6 +344,7 @@ async def main():
         )
 
         try:
+
             await bot.start()
 
             bot_started = True
@@ -286,6 +374,7 @@ async def main():
             )
 
         except Exception:
+
             LOGGER.error(
                 "FAILED TO START PYROGRAM CLIENT"
             )
@@ -306,6 +395,7 @@ async def main():
         )
 
         try:
+
             await call_py.start()
 
             calls_started = True
@@ -315,6 +405,7 @@ async def main():
             )
 
         except Exception:
+
             LOGGER.error(
                 "FAILED TO START PYTGCALLS CLIENT"
             )
@@ -325,6 +416,16 @@ async def main():
             )
 
             raise
+
+        # ====================================================
+        # TELEGRAM API CONNECTION TEST
+        # ====================================================
+
+        LOGGER.warning(
+            "[BUILD CHECK] STARTING V39 API CONNECTION TEST"
+        )
+
+        await telegram_api_test()
 
         # ====================================================
         # SUCCESS MESSAGE
@@ -339,6 +440,7 @@ async def main():
             "  PyTgCalls: STARTED                   \n"
             "  Status   : RUNNING                   \n"
             "  Debug    : ENABLED                   \n"
+            "  Build    : V39                       \n"
             "=======================================\n"
         )
 
@@ -348,7 +450,7 @@ async def main():
         )
 
         # ====================================================
-        # KEEP BOT RUNNING
+        # KEEP USERBOT RUNNING
         # ====================================================
 
         LOGGER.info(
@@ -358,21 +460,26 @@ async def main():
         await idle()
 
     except KeyboardInterrupt:
+
         LOGGER.info(
             "KEYBOARD INTERRUPT RECEIVED"
         )
 
     except asyncio.CancelledError:
+
         LOGGER.warning(
             "MAIN TASK CANCELLED"
         )
+
         raise
 
     except Exception:
+
         LOGGER.critical(
             "MEOW STARTUP / RUNTIME FAILURE",
             exc_info=True,
         )
+
         raise
 
     finally:
@@ -386,7 +493,9 @@ async def main():
         # ====================================================
 
         if calls_started:
+
             try:
+
                 LOGGER.info(
                     "STOPPING PYTGCALLS..."
                 )
@@ -398,6 +507,7 @@ async def main():
                 )
 
             except Exception:
+
                 LOGGER.error(
                     "PYTGCALLS STOP ERROR",
                     exc_info=True,
@@ -408,7 +518,9 @@ async def main():
         # ====================================================
 
         if bot_started:
+
             try:
+
                 LOGGER.info(
                     "STOPPING PYROGRAM..."
                 )
@@ -420,6 +532,7 @@ async def main():
                 )
 
             except Exception:
+
                 LOGGER.error(
                     "PYROGRAM STOP ERROR",
                     exc_info=True,
@@ -442,14 +555,17 @@ if __name__ == "__main__":
     )
 
     try:
+
         asyncio.run(main())
 
     except KeyboardInterrupt:
+
         LOGGER.info(
             "PROCESS INTERRUPTED"
         )
 
     except Exception:
+
         LOGGER.critical(
             "MEOW PROCESS TERMINATED DUE TO ERROR",
             exc_info=True,
