@@ -5,8 +5,7 @@ import binascii
 
 from dotenv import load_dotenv
 from pyrogram import Client, filters
-from Modules.helpers.modern_calls import ModernCalls
-
+from modules.helpers.modern_calls import ModernCalls
 
 __version__ = "v0.1"
 
