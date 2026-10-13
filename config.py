@@ -124,7 +124,9 @@ try:
     api_hash=API_HASH,
     session_string=SESSION,
     plugins=dict(root="modules"),
+    no_updates=False,
 )
+
 
 except Exception as e:
     print(f"PYROGRAM CLIENT CONFIG ERROR: {e}")
