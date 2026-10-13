@@ -162,31 +162,66 @@ async def direct_update_debug(client, message):
 
 
 # ============================================================
+# RAW TELEGRAM UPDATE DIAGNOSTIC
+# ============================================================
+
+async def raw_update_debug(client, update, users, chats):
+    try:
+        update_type = type(update).__name__
+
+        LOGGER.warning(
+            "[RAW UPDATE RECEIVED] type=%s",
+            update_type
+        )
+
+        # Do not log message contents or sensitive raw payloads.
+
+    except Exception:
+        LOGGER.exception(
+            "[RAW UPDATE] Diagnostic handler failed"
+        )
+
+# ============================================================
 # REGISTER DIRECT DEBUG HANDLER
 # ============================================================
+
 
 def register_debug_handler():
 
     LOGGER.warning(
-        "[DEBUG] Starting direct handler registration..."
+        "[DEBUG] Registering diagnostic handlers..."
     )
 
+    # Normal message handler
     bot.add_handler(
         MessageHandler(
             direct_update_debug,
-            filters.all,
+            filters.all
         ),
-        group=-200,
+        group=-200
     )
 
     LOGGER.warning(
-        "[DEBUG] Direct update handler registered in group -200"
+        "[DEBUG] Direct message handler registered"
+    )
+
+    # Raw Telegram update handler
+    bot.add_handler(
+        RawUpdateHandler(
+            raw_update_debug
+        ),
+        group=-300
+    )
+
+    LOGGER.warning(
+        "[DEBUG] Raw update handler registered"
     )
 
     print(
-        "[BUILD CHECK] DIRECT DEBUG HANDLER REGISTERED",
-        flush=True,
+        "[BUILD CHECK] MESSAGE + RAW HANDLERS REGISTERED",
+        flush=True
     )
+
 
 
 # ============================================================
